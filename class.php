@@ -25,7 +25,14 @@ Class Employee
         // fetchAll = array
         // fetch = obj
         while($row = $stmt->fetch()){
-            echo $row->firstname." ".$row->lastname."<br/>";
+            echo "<tr>
+                    <td>$row->id</td>
+                    <td>$row->firstname</td>
+                    <td>$row->lastname</td>
+                    <td>$row->age</td>
+                    <td>$row->email</td>
+                    <td>$row->access_level</td>
+                  <tr/>";
         }
     }
 
@@ -67,12 +74,56 @@ Class Employee
 
     public function accessLevel($access, $fullname)
     {
+        $message = 'you are not allowed to enter the system';
         if($access == 'user'){
-            header('Location: index.php');
+            header("Location: index.php?message=$message");
         } else if($access == 'administrator') {
             echo 'Welcome Admin: '. $fullname;
+            return $access;
         } else {
-            header('Location: index.php');
+            header("Location: index.php?message=$message");
+        }
+    }
+
+
+    public function addEmployee($userAccess)
+    {
+        if(isset($_POST['add'])){
+            $firstname = $_POST['firstname'];
+            $lastname = $_POST['lastname'];
+            $age = $_POST['age'];
+            $email = $_POST['email'];
+            $password = $_POST['password'];
+        
+            if(empty($firstname) &&
+               empty($lastname) &&
+               empty($age) &&
+               empty($email) &&
+               empty($password)   
+            ){
+                echo 'All input fields are required';
+            } else {
+                if($userAccess == 'administrator'){
+                    
+                    $userLevel = 'user';
+
+                    $sql = "INSERT INTO empdetails(`firstname`, `lastname`, `age`, `email`, `password`, `access_level`)
+                    VALUES(?, ?, ?, ?, ?, ?)";
+                    $stmt = $this->con()->prepare($sql);
+                    $stmt->execute([$firstname, $lastname, $age, $email, $password, $userLevel]);
+                    $countRow = $stmt->rowCount();
+
+                    if($countRow > 0){
+                        echo 'New data was added';
+                    } else {
+                        echo 'There was an error to our code';
+                    }
+
+                } else {
+                    echo 'You are not allowed to add employee';
+                    header('Location: index.php');
+                }
+            }
         }
     }
 
