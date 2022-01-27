@@ -1,8 +1,6 @@
 <?php
-
 Class Employee
 {
-
     private $username = 'root';
     private $password = '';
     
@@ -18,9 +16,9 @@ Class Employee
 
 
 
-    public function getAllData()
+    public function getAllData($id)
     {
-        $sql = "SELECT * FROM empdetails";
+        $sql = "SELECT * FROM empdetails WHERE id != $id";
         $stmt = $this->con()->query($sql);
         // fetchAll = array
         // fetch = obj
@@ -32,7 +30,11 @@ Class Employee
                     <td>$row->age</td>
                     <td>$row->email</td>
                     <td>$row->access_level</td>
-                  <tr/>";
+                    <td>
+                        <a href='updateEmployee.php?id=$row->id'>Update</a>
+                        <a href='deleteEmployee.php?id=$row->id'>Delete</a>
+                    </td>
+                  <tr/>";   
         }
     }
 
@@ -54,7 +56,7 @@ Class Employee
 
                 if($countRow > 0){
                     session_start();
-                    $_SESSION['userdetails'] = array('fullname' => $users->firstname." ".$users->lastname, 'access' => $users->access_level);
+                    $_SESSION['userdetails'] = array('id' => $users->id, 'fullname' => $users->firstname." ".$users->lastname, 'access' => $users->access_level);
                     header('Location: dashboard.php');
                     return $_SESSION['userdetails'];
                 } else {
@@ -127,6 +129,124 @@ Class Employee
         }
     }
 
+    // populate input fields
+    public function populateFields($id)
+    {
+        $sql = "SELECT * FROM empdetails WHERE id = ?";
+        $stmt = $this->con()->prepare($sql);
+        $stmt->execute([$id]);
+        $users = $stmt->fetch();
+
+        session_start();
+        $_SESSION['userEditDetails'] = array('firstname' => $users->firstname,
+                                             'lastname' => $users->lastname,
+                                             'age' => $users->age,
+                                             'email' => $users->email,
+                                             'password' => $users->password
+                                            );
+        return $_SESSION['userEditDetails'];
+    }
+
+    public function editEmployee($id)
+    {
+        if(isset($_POST['edit'])){
+            $firstname = $_POST['firstname'];
+            $lastname = $_POST['lastname'];
+            $age = $_POST['age'];
+            $email = $_POST['email'];
+            $password = $_POST['password'];
+
+            if(empty($firstname) &&
+               empty($lastname) &&
+               empty($age) &&
+               empty($email) &&
+               empty($password)
+            ){
+                echo 'All input fields are required';
+            } else {
+                $sql = "UPDATE empdetails 
+                SET firstname = ?,
+                    lastname = ?,
+                    age = ?,
+                    email = ?,
+                    password = ?
+                WHERE id = ?";
+                $stmt = $this->con()->prepare($sql);
+                $stmt->execute([$firstname, $lastname, $age, $email, $password, $id]);
+                $countRow = $stmt->rowCount();
+
+                if($countRow > 0){
+                    header('Location: dashboard.php');
+                } else {
+                    echo 'There was an error to our code';
+                }
+            }
+        }
+    }
+
+    public function deleteEmployee($id)
+    {
+        if(isset($_POST['cancel'])){
+            header('Location: dashboard.php');
+        }
+
+        if(isset($_POST['delete'])){
+            $sql = "DELETE FROM empdetails WHERE id = ?";
+            $stmt = $this->con()->prepare($sql);
+            $stmt->execute([$id]);
+            $countRow = $stmt->rowCount();
+
+            if($countRow > 0){
+                header('Location: dashboard.php');
+            } else {
+                echo 'Error deleting employee record';
+            }
+        }
+    }
+
+
+    public function searchEmployee($id)
+    {
+        if(isset($_POST['search'])){
+            $lastname = $_POST['lastname'];
+
+            if(!empty($lastname)){
+                
+                $sql = "SELECT * FROM empdetails WHERE lastname = ? AND id != ?";
+                $stmt = $this->con()->prepare($sql);
+                $stmt->execute([$lastname, $id]);
+                $users = $stmt->fetchAll();
+                $countRow = $stmt->rowCount();
+
+                if($countRow > 0){
+                    foreach($users as $user){
+                        echo "<tr>
+                                <td>$user->id</td>
+                                <td>$user->firstname</td>
+                                <td>$user->lastname</td>
+                                <td>$user->age</td>
+                                <td>$user->email</td>
+                                <td>$user->access_level</td>
+                                <td>
+                                    <a href='updateEmployee.php?id=$user->id'>Update</a>
+                                    <a href='deleteEmployee.php?id=$user->id'>Delete</a>
+                                </td>
+                              <tr/>";
+                    }
+                } else {
+                    echo "<tr>
+                            <td>No User Found</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                          <tr/>";
+                }
+            }
+        }
+    }
 }
 
 $employee = new Employee;

@@ -3,7 +3,7 @@ require_once('class.php');
 $fullname = $_GET['fullname'];
 $access = $_GET['access'];
 
-$userAccess = $employee->accessLevel($access, $fullname);
+$userAccess = $employee->accessLevel($access, $fullname); // administrator
 $employee->addEmployee($userAccess);
 
 ?>

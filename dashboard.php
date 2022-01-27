@@ -3,8 +3,11 @@ require_once('class.php');
 $userData = $employee->getUserData();
 $access = $userData['access'];
 $fullname = $userData['fullname'];
+$id = $userData['id'];
 
-$employee->accessLevel($access, $fullname);
+$employee->accessLevel($access, $fullname); // return access = administrator
+
+
 
 ?>
 
@@ -30,20 +33,31 @@ $employee->accessLevel($access, $fullname);
     <br/>
     <a href="addEmployee.php?access=<?php echo $access; ?>&fullname=<?php echo $fullname; ?>">Add Employee</a>
 
+    <form method="post">
+        <input type="search" name="lastname" placeholder="Search by lastname"/>
+        <button type="submit" name="search">Search</button>
+    </form>
+
     <table>
         <thead>
             <tr>
-                <td>ID</td>
-                <td>Firstname</td>
-                <td>Lastname</td>
-                <td>Age</td>
-                <td>Email</td>
-                <td>Access</td>
-                <td>Action</td>
+                <th>ID</th>
+                <th>Firstname</th>
+                <th>Lastname</th>
+                <th>Age</th>
+                <th>Email</th>
+                <th>Access</th>
+                <th>Action</th>
             </tr>
         </thead>
         <tbody>
-            <?php $employee->getAllData(); ?>
+            <?php 
+                if(isset($_POST['search'])){
+                    $employee->searchEmployee($id);
+                } else {
+                    $employee->getAllData($id); 
+                }
+            ?>
         </tbody>
     </table>
 </body>
